@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -15,7 +15,7 @@ type Block struct {
 	Data   []byte
 }
 
-func New(file *os.File, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (*Block, error) {
 	var b Block
 
 	// Seek to the start address

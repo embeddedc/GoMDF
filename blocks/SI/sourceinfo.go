@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -48,7 +48,7 @@ type SourceInfo struct {
 	Flag    string
 }
 
-func New(file *os.File, version uint16, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, version uint16, startAddress int64) (*Block, error) {
 	var b Block
 
 	// Seek to the start address
@@ -96,7 +96,7 @@ func New(file *os.File, version uint16, startAddress int64) (*Block, error) {
 
 // GetPath returns human readable string containing additional
 // information about the source
-func (b *Block) Path(file *os.File) string {
+func (b *Block) Path(file *readeratwrapper.ReaderAtWrapper) string {
 	if b.Link.TxPath == 0 {
 		return ""
 	}
@@ -109,7 +109,7 @@ func (b *Block) Path(file *os.File) string {
 	return t
 }
 
-func (b *Block) Name(file *os.File) string {
+func (b *Block) Name(file *readeratwrapper.ReaderAtWrapper) string {
 	if b.Link.TxName == 0 {
 		return ""
 	}
@@ -122,7 +122,7 @@ func (b *Block) Name(file *os.File) string {
 	return t
 }
 
-func (b *Block) Comment(file *os.File) string {
+func (b *Block) Comment(file *readeratwrapper.ReaderAtWrapper) string {
 	if b.Link.TxName == 0 {
 		return ""
 	}
@@ -135,7 +135,7 @@ func (b *Block) Comment(file *os.File) string {
 	return t
 }
 
-func Get(file *os.File, version uint16, address int64) SourceInfo {
+func Get(file *readeratwrapper.ReaderAtWrapper, version uint16, address int64) SourceInfo {
 	b, err := New(file, version, address)
 	if err != nil {
 		return SourceInfo{

@@ -4,7 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
+
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -18,7 +19,7 @@ type Block struct {
 	CustomUnfinalizedFlag uint16
 }
 
-func New(file *os.File, startAdress int64) *Block {
+func New(file *readeratwrapper.ReaderAtWrapper, startAdress int64) *Block {
 	var b Block
 
 	_, errs := file.Seek(startAdress, 0)

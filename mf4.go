@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"github.com/LincolnG4/GoMDF/blocks"
@@ -19,11 +18,13 @@ import (
 	"github.com/LincolnG4/GoMDF/blocks/MD"
 	"github.com/LincolnG4/GoMDF/blocks/SI"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 	"github.com/davecgh/go-spew/spew"
+	"golang.org/x/exp/mmap"
 )
 
 type MF4 struct {
-	File           *os.File
+	File           *readeratwrapper.ReaderAtWrapper
 	Header         *HD.Block
 	Identification *ID.Block
 
@@ -72,11 +73,14 @@ type UnsortedBlock struct {
 	channelGroupsByID map[uint64]*ChannelGroup
 }
 
-func ReadFile(file *os.File, readOptions *ReadOptions) (*MF4, error) {
+func ReadFile(reader *mmap.ReaderAt, readOptions *ReadOptions) (*MF4, error) {
 	var address int64 = 0
+
+	wrapper := readeratwrapper.NewReaderAtWrapper(reader, 0)
+
 	mf4File := MF4{
-		File:           file,
-		Identification: ID.New(file, address),
+		File:           wrapper,
+		Identification: ID.New(wrapper, address),
 		ReadOptions:    readOptions,
 	}
 	fileVersion := mf4File.MdfVersion()
@@ -93,7 +97,6 @@ func ReadFile(file *os.File, readOptions *ReadOptions) (*MF4, error) {
 }
 
 func (m *MF4) read() {
-	var file *os.File = m.File
 	var comment string
 
 	if !m.IsFinalized() {
@@ -110,17 +113,17 @@ func (m *MF4) read() {
 		var UnsortedBlocks UnsortedBlock
 		isUnsorted := false
 
-		dataGroup = NewDataGroup(file, nextDataGroupAddress)
+		dataGroup = NewDataGroup(m.File, nextDataGroupAddress)
 		m.DataGroups = append(m.DataGroups, dataGroup)
 
-		comment = MD.New(file, dataGroup.block.MetadataComment())
+		comment = MD.New(m.File, dataGroup.block.MetadataComment())
 
 		nextAddressCG := dataGroup.block.FirstChannelGroup()
 		cgIndex := 0
 		for nextAddressCG != 0 {
 			var masterChannel Channel
 
-			cgBlock, err := CG.New(file, version, nextAddressCG)
+			cgBlock, err := CG.New(m.File, version, nextAddressCG)
 			if err != nil {
 				panic(err)
 			}
@@ -129,7 +132,7 @@ func (m *MF4) read() {
 				Block:      cgBlock,
 				Channels:   make(map[string]*Channel),
 				DataGroup:  dataGroup.block,
-				SourceInfo: SI.Get(file, version, cgBlock.Link.SiAcqSource),
+				SourceInfo: SI.Get(m.File, version, cgBlock.Link.SiAcqSource),
 				Comment:    comment,
 			}
 
@@ -137,7 +140,7 @@ func (m *MF4) read() {
 
 			nextAddressCN := cgBlock.FirstChannel()
 			for nextAddressCN != 0 {
-				cnBlock, err := CN.New(file, version, nextAddressCN)
+				cnBlock, err := CN.New(m.File, version, nextAddressCN)
 				if err != nil {
 					panic(err)
 				}
@@ -155,8 +158,8 @@ func (m *MF4) read() {
 					DataGroupIndex:    dgindex,
 					Type:              cnBlock.Type(),
 					Master:            &masterChannel,
-					SourceInfo:        SI.Get(file, version, cnBlock.Link.SiSource),
-					Comment:           MD.New(file, cnBlock.CommentMd()),
+					SourceInfo:        SI.Get(m.File, version, cnBlock.Link.SiSource),
+					Comment:           MD.New(m.File, cnBlock.CommentMd()),
 					Conversion:        cc,
 					block:             cnBlock,
 					isUnsorted:        false,
@@ -182,7 +185,7 @@ func (m *MF4) read() {
 						vsldMap := make(map[string]*Channel)
 						vsldMap["vlsd"] = cn
 						cn.isUnsorted = true
-						VLSDBlock, err := CG.New(file, version, cnBlock.Link.Data)
+						VLSDBlock, err := CG.New(m.File, version, cnBlock.Link.Data)
 						if err != nil {
 							panic(err)
 						}
@@ -191,7 +194,7 @@ func (m *MF4) read() {
 							Block:      VLSDBlock,
 							Channels:   vsldMap,
 							DataGroup:  dataGroup.block,
-							SourceInfo: SI.Get(file, version, VLSDBlock.Link.SiAcqSource),
+							SourceInfo: SI.Get(m.File, version, VLSDBlock.Link.SiAcqSource),
 							Comment:    comment,
 						}
 
@@ -454,7 +457,7 @@ func (m *MF4) ListEvents() []*EV.Event {
 	return r
 }
 
-func readArrayBlock(file *os.File, addr int64) {
+func readArrayBlock(wrapper *readeratwrapper.ReaderAtWrapper, addr int64) {
 	//debug(file,addr,400)
 }
 
@@ -651,7 +654,7 @@ func (m *MF4) getHeaderMdComment() int64 {
 	return m.Header.Link.MdComment
 }
 
-func seekRead(file *os.File, readAddr int64, data []byte) {
+func seekRead(file *readeratwrapper.ReaderAtWrapper, readAddr int64, data []byte) {
 	_, errs := file.Seek(readAddr, 0)
 	if errs != nil {
 		if errs != io.EOF {
@@ -666,7 +669,7 @@ func seekRead(file *os.File, readAddr int64, data []byte) {
 	}
 }
 
-func debug(file *os.File, offset int64, size int) {
+func debug(file *readeratwrapper.ReaderAtWrapper, offset int64, size int) {
 	_, err := file.Seek(int64(offset), io.SeekStart)
 	if err != nil {
 		panic(err)

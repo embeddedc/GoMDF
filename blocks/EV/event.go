@@ -4,11 +4,11 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/MD"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -75,7 +75,7 @@ func (b *Block) getLinkCount() uint64 {
 
 // Creates a new Block struct and initializes it by reading data from
 // the provided file.
-func New(file *os.File, version uint16, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, version uint16, startAddress int64) (*Block, error) {
 	var b Block
 	blockID := blocks.EvID
 
@@ -142,7 +142,7 @@ func extractLinkFields(linkBytes []byte) []int64 {
 	return linkFields
 }
 
-func (b *Block) readHeader(file *os.File) error {
+func (b *Block) readHeader(file *readeratwrapper.ReaderAtWrapper) error {
 	blockSize := blocks.HeaderSize
 	buf := blocks.LoadBuffer(file, blockSize)
 	err := binary.Read(buf, binary.LittleEndian, &b.Header)
@@ -152,7 +152,7 @@ func (b *Block) readHeader(file *os.File) error {
 	return nil
 }
 
-func (b *Block) readLink(file *os.File) ([]byte, error) {
+func (b *Block) readLink(file *readeratwrapper.ReaderAtWrapper) ([]byte, error) {
 	linkCount := b.getLinkCount()
 	blockSize := blocks.CalculateLinkSize(linkCount)
 	buffEach := make([]byte, blockSize)
@@ -162,7 +162,7 @@ func (b *Block) readLink(file *os.File) ([]byte, error) {
 	return buffEach, nil
 }
 
-func (b *Block) readData(file *os.File) error {
+func (b *Block) readData(file *readeratwrapper.ReaderAtWrapper) error {
 	blockSize := blocks.CalculateDataSize(b.Header.Length, b.Header.LinkCount)
 	buf := blocks.LoadBuffer(file, blockSize)
 	// Create a buffer based on block size
@@ -172,19 +172,19 @@ func (b *Block) readData(file *os.File) error {
 	return nil
 }
 
-func (b *Block) Load(mf4File *os.File) *Event {
+func (b *Block) Load(file *readeratwrapper.ReaderAtWrapper) *Event {
 	var n, c string
 	var err error
 
 	if b.Link.TxName != 0 {
-		n, err = TX.GetText(mf4File, b.Link.TxName)
+		n, err = TX.GetText(file, b.Link.TxName)
 		if err != nil {
 			n = ""
 		}
 	}
 
 	if b.Link.MdComment != 0 {
-		c = MD.New(mf4File, b.Link.MdComment)
+		c = MD.New(file, b.Link.MdComment)
 	}
 
 	return &Event{

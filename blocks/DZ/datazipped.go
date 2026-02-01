@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type ZipBlock interface {
@@ -72,7 +72,7 @@ const (
 	DataLengthSize        = 8
 )
 
-func New(file *os.File, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (*Block, error) {
 	var b Block
 
 	// Seek to the start address

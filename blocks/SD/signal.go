@@ -1,9 +1,8 @@
 package SD
 
 import (
-	"os"
-
 	"github.com/LincolnG4/GoMDF/blocks"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -11,7 +10,7 @@ type Block struct {
 	Data   []byte
 }
 
-func New(file *os.File, startAdress int64) *Block {
+func New(file *readeratwrapper.ReaderAtWrapper, startAdress int64) *Block {
 	var b Block
 	var err error
 

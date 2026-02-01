@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/CC"
@@ -17,6 +16,7 @@ import (
 	"github.com/LincolnG4/GoMDF/blocks/DZ"
 	"github.com/LincolnG4/GoMDF/blocks/HL"
 	"github.com/LincolnG4/GoMDF/blocks/SI"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type ChannelGroup struct {
@@ -101,8 +101,8 @@ type ChannelReader struct {
 	StartOffset int64
 }
 
-func (cn *ChannelReader) loadBuffer(f *os.File) error {
-	length, err := blocks.GetLength(f, cn.DataAddress)
+func (cn *ChannelReader) loadBuffer(file *readeratwrapper.ReaderAtWrapper) error {
+	length, err := blocks.GetLength(file, cn.DataAddress)
 	if err != nil {
 		return err
 	}
@@ -114,38 +114,38 @@ func (cn *ChannelReader) loadBuffer(f *os.File) error {
 	return nil
 }
 
-func readBlockFromFile(f *os.File, dataAddress int64, buf []byte) error {
+func readBlockFromFile(file *readeratwrapper.ReaderAtWrapper, dataAddress int64, buf []byte) error {
 	var err error
-	if _, err = f.Seek(dataAddress+int64(blocks.HeaderSize), io.SeekStart); err != nil {
+	if _, err = file.Seek(dataAddress+int64(blocks.HeaderSize), io.SeekStart); err != nil {
 		return err
 	}
 
-	_, err = io.ReadFull(f, buf)
+	_, err = io.ReadFull(file, buf)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (cn *ChannelReader) readBlockToMemory(f *os.File) error {
-	err := cn.loadBuffer(f)
+func (cn *ChannelReader) readBlockToMemory(file *readeratwrapper.ReaderAtWrapper) error {
+	err := cn.loadBuffer(file)
 	if err != nil {
 		return err
 	}
 
-	return readBlockFromFile(f, cn.DataAddress, cn.MeasureBuffer)
+	return readBlockFromFile(file, cn.DataAddress, cn.MeasureBuffer)
 }
 
-func (cn *ChannelReader) readDatablock(f *os.File, pos int64) (interface{}, error) {
+func (cn *ChannelReader) readDatablock(file *readeratwrapper.ReaderAtWrapper, pos int64) (interface{}, error) {
 	//check if end of datablock
 	if pos+int64(cn.SizeMeasureRow) > int64(len(cn.MeasureBuffer)) {
-		length, err := blocks.GetLength(f, cn.DataAddress)
+		length, err := blocks.GetLength(file, cn.DataAddress)
 		if err != nil {
 			return nil, err
 		}
 
 		buf := make([]byte, length)
-		err = readBlockFromFile(f, cn.DataAddress, buf)
+		err = readBlockFromFile(file, cn.DataAddress, buf)
 		if err != nil {
 			return nil, err
 		}
@@ -511,7 +511,7 @@ func (c *Channel) applyConversion(sample *[]interface{}) {
 	c.isConverted = true
 }
 
-func (c *Channel) readInvalidationBit(file *os.File) (bool, error) {
+func (c *Channel) readInvalidationBit(file *readeratwrapper.ReaderAtWrapper) (bool, error) {
 	address := c.getInvalidationBitStart()
 
 	if _, err := file.Seek(address, io.SeekCurrent); err != nil {

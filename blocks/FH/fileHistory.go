@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -30,7 +30,7 @@ type Data struct {
 	Reserved     [3]byte
 }
 
-func New(file *os.File, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (*Block, error) {
 	var b Block
 
 	// Seek to the start address
@@ -88,7 +88,7 @@ func (b *Block) BlankBlock() *Block {
 	}
 }
 
-func (b *Block) GetChangeLog(file *os.File) string {
+func (b *Block) GetChangeLog(file *readeratwrapper.ReaderAtWrapper) string {
 	t, err := TX.GetText(file, b.GetMdComment())
 	if err != nil {
 		return ""

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"os"
 	"sort"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 	"github.com/soniah/evaler"
 )
 
@@ -122,7 +122,7 @@ type BitfieldText struct {
 	Links   []float64
 }
 
-func New(file *os.File, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (*Block, error) {
 	var b Block
 
 	// Initialize the header
@@ -197,7 +197,7 @@ func New(file *os.File, startAddress int64) (*Block, error) {
 }
 
 // Get returns an conversion struct type
-func (b *Block) Get(file *os.File, channelType uint8) (Conversion, error) {
+func (b *Block) Get(file *readeratwrapper.ReaderAtWrapper, channelType uint8) (Conversion, error) {
 	switch b.dataType() {
 	case blocks.CcNoConversion:
 		return nil, nil
@@ -227,7 +227,7 @@ func (b *Block) Get(file *os.File, channelType uint8) (Conversion, error) {
 }
 
 // GetLinear returns linear conversion struct type
-func (b *Block) GetLinear(file *os.File) (Conversion, error) {
+func (b *Block) GetLinear(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	v := b.getVal()
 
 	return &Linear{
@@ -238,7 +238,7 @@ func (b *Block) GetLinear(file *os.File) (Conversion, error) {
 }
 
 // GetVVInterporlation returns value to value tabular look-up with interpolation
-func (b *Block) GetValueToValue(file *os.File) (Conversion, error) {
+func (b *Block) GetValueToValue(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	v := b.getVal()
 	key, value := createKeyValueFloat64(&v)
 	return &ValueValue{
@@ -250,7 +250,7 @@ func (b *Block) GetValueToValue(file *os.File) (Conversion, error) {
 }
 
 // GetVVInterporlation returns value to value tabular look-up with interpolation
-func (b *Block) GetValueRangeToValue(file *os.File, channelType uint8) (Conversion, error) {
+func (b *Block) GetValueRangeToValue(file *readeratwrapper.ReaderAtWrapper, channelType uint8) (Conversion, error) {
 	v := b.getVal()
 	keyMin, keyMax, value, def := createKeyMinMaxValue(&v)
 	return &ValueRangeToValue{
@@ -264,7 +264,7 @@ func (b *Block) GetValueRangeToValue(file *os.File, channelType uint8) (Conversi
 }
 
 // GetRational returns rational conversion struct type
-func (b *Block) GetRational(file *os.File) (Conversion, error) {
+func (b *Block) GetRational(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	v := b.getVal()
 
 	return &Rational{
@@ -278,7 +278,7 @@ func (b *Block) GetRational(file *os.File) (Conversion, error) {
 	}, nil
 }
 
-func (b *Block) GetAlgebraic(file *os.File) (Conversion, error) {
+func (b *Block) GetAlgebraic(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	formula, err := b.refToString(file)
 	if err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func (b *Block) GetAlgebraic(file *os.File) (Conversion, error) {
 	}, nil
 }
 
-func (b *Block) GetValueToText(file *os.File) (Conversion, error) {
+func (b *Block) GetValueToText(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	v := b.getVal()
 	t, err := b.refToString(file)
 	if err != nil {
@@ -303,7 +303,7 @@ func (b *Block) GetValueToText(file *os.File) (Conversion, error) {
 	}, nil
 }
 
-func (b *Block) GetValueRangeToText(file *os.File, channelType uint8) (Conversion, error) {
+func (b *Block) GetValueRangeToText(file *readeratwrapper.ReaderAtWrapper, channelType uint8) (Conversion, error) {
 	v := b.getVal()
 	min, max := createKeyValueFloat64(&v)
 	t, err := b.refToString(file)
@@ -320,7 +320,7 @@ func (b *Block) GetValueRangeToText(file *os.File, channelType uint8) (Conversio
 	}, nil
 }
 
-func (b *Block) GetTextToValue(file *os.File) (Conversion, error) {
+func (b *Block) GetTextToValue(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	v := b.getVal()
 	t, err := b.refToString(file)
 	if err != nil {
@@ -335,7 +335,7 @@ func (b *Block) GetTextToValue(file *os.File) (Conversion, error) {
 	}, nil
 }
 
-func (b *Block) GetTextToText(file *os.File) (Conversion, error) {
+func (b *Block) GetTextToText(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	t, err := b.refToString(file)
 	if err != nil {
 		return nil, err
@@ -352,7 +352,7 @@ func (b *Block) GetTextToText(file *os.File) (Conversion, error) {
 	}, nil
 }
 
-func (b *Block) GetBitfield(file *os.File) (Conversion, error) {
+func (b *Block) GetBitfield(file *readeratwrapper.ReaderAtWrapper) (Conversion, error) {
 	v := b.getVal()
 	t, err := b.refToString(file)
 	if err != nil {
@@ -706,7 +706,7 @@ func createKeyMinMaxValue(val *[]float64) ([]float64, []float64, []float64, floa
 	return keyMin, keyMax, vals, def
 }
 
-func (b *Block) getInfo(file *os.File) Info {
+func (b *Block) getInfo(file *readeratwrapper.ReaderAtWrapper) Info {
 	return Info{
 		Name:    b.name(file),
 		Unit:    b.unit(file),
@@ -714,7 +714,7 @@ func (b *Block) getInfo(file *os.File) Info {
 	}
 }
 
-func (b *Block) refToString(file *os.File) ([]interface{}, error) {
+func (b *Block) refToString(file *readeratwrapper.ReaderAtWrapper) ([]interface{}, error) {
 	var result interface{}
 
 	ref := b.getRef()
@@ -768,7 +768,7 @@ func (b *Block) getRef() []int64 {
 	return b.Link.Ref
 }
 
-func (b *Block) name(file *os.File) string {
+func (b *Block) name(file *readeratwrapper.ReaderAtWrapper) string {
 	if b.Link.TxName == 0 {
 		return ""
 	}
@@ -781,7 +781,7 @@ func (b *Block) name(file *os.File) string {
 	return t
 }
 
-func (b *Block) unit(file *os.File) string {
+func (b *Block) unit(file *readeratwrapper.ReaderAtWrapper) string {
 	if b.Link.MdUnit == 0 {
 		return ""
 	}
@@ -794,7 +794,7 @@ func (b *Block) unit(file *os.File) string {
 	return t
 }
 
-func (b *Block) comment(file *os.File) string {
+func (b *Block) comment(file *readeratwrapper.ReaderAtWrapper) string {
 	if b.Link.MdComment == 0 {
 		return ""
 	}

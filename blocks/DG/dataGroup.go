@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -27,7 +28,7 @@ type Data struct {
 	Reserved  [7]byte
 }
 
-func New(file *os.File, startAddress int64) *Block {
+func New(file *readeratwrapper.ReaderAtWrapper, startAddress int64) *Block {
 	var b Block
 
 	// Initialize header

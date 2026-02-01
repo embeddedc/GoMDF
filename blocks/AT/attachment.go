@@ -15,6 +15,7 @@ import (
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/MD"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -62,7 +63,7 @@ type AttFile struct {
 	block        *Block
 }
 
-func New(file *os.File, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (*Block, error) {
 	var b Block
 
 	// Seek to the start address
@@ -98,7 +99,7 @@ func New(file *os.File, startAddress int64) (*Block, error) {
 	return &b, nil
 }
 
-func (b *Block) LoadAttachmentFile(file *os.File) *AttFile {
+func (b *Block) LoadAttachmentFile(file *readeratwrapper.ReaderAtWrapper) *AttFile {
 	var fileName string
 	var comment string
 
@@ -125,7 +126,7 @@ func (a AttFile) getBlock() *Block {
 	return a.block
 }
 
-func (a AttFile) Save(file *os.File, outputPath string) AttFile {
+func (a AttFile) Save(file *readeratwrapper.ReaderAtWrapper, outputPath string) AttFile {
 	b := a.getBlock()
 	//Load data to block
 	addr := b.Address + int64(blocks.HeaderSize) + int64(blocks.CalculateLinkSize(a.block.Header.LinkCount))
@@ -204,7 +205,7 @@ func decompressFile(d *Data) []byte {
 }
 
 // saveFile saves bytes to target file
-func saveFile(file *os.File, outputPath string, data *[]byte) error {
+func saveFile(file *readeratwrapper.ReaderAtWrapper, outputPath string, data *[]byte) error {
 	f, err := os.Create(outputPath)
 	if err != nil {
 		fmt.Println("error to create the file output: ", err)
@@ -218,7 +219,7 @@ func saveFile(file *os.File, outputPath string, data *[]byte) error {
 	return nil
 }
 
-func (b *Block) loadData(file *os.File, adress int64) (*Data, error) {
+func (b *Block) loadData(file *readeratwrapper.ReaderAtWrapper, adress int64) (*Data, error) {
 	_, errs := file.Seek(adress, 0)
 	if errs != nil {
 		if errs != io.EOF {
@@ -251,29 +252,29 @@ func (b *Block) loadData(file *os.File, adress int64) (*Data, error) {
 	return &d, nil
 }
 
-func Get(f *os.File, a int64) ([]AttFile, error) {
+func Get(file *readeratwrapper.ReaderAtWrapper, a int64) ([]AttFile, error) {
 	var fileName, comm string
 	i := 0
 	arr := make([]AttFile, 0)
 	for a != 0 {
-		atBlock, err := New(f, a)
+		atBlock, err := New(file, a)
 		if err != nil {
 			return arr, nil
 		}
 
 		if atBlock.GetTxFilename() != 0 {
-			fileName = atBlock.GetFileName(f, atBlock.GetTxFilename())
+			fileName = atBlock.GetFileName(file, atBlock.GetTxFilename())
 		} else {
 			fileName = fmt.Sprintf("file-%d", i)
 			i++
 		}
 
-		mimeType := atBlock.GetMimeType(f, atBlock.GetTxMimeType())
+		mimeType := atBlock.GetMimeType(file, atBlock.GetTxMimeType())
 
 		//Read MDComment
 		MdCommentAdress := atBlock.GetMdComment()
 		if MdCommentAdress != 0 {
-			comm = MD.New(f, MdCommentAdress)
+			comm = MD.New(file, MdCommentAdress)
 		}
 
 		arr = append(arr, AttFile{
@@ -295,7 +296,7 @@ func (b *Block) GetTxMimeType() int64 {
 	return b.Link.TxMimetype
 }
 
-func GetTextString(file *os.File, a int64) string {
+func GetTextString(file *readeratwrapper.ReaderAtWrapper, a int64) string {
 	t, err := TX.GetText(file, a)
 	if err != nil {
 		return ""
@@ -304,11 +305,11 @@ func GetTextString(file *os.File, a int64) string {
 	return t
 }
 
-func (b *Block) GetFileName(file *os.File, a int64) string {
+func (b *Block) GetFileName(file *readeratwrapper.ReaderAtWrapper, a int64) string {
 	return GetTextString(file, a)
 }
 
-func (b *Block) GetMimeType(file *os.File, a int64) string {
+func (b *Block) GetMimeType(file *readeratwrapper.ReaderAtWrapper, a int64) string {
 	return GetTextString(file, a)
 }
 

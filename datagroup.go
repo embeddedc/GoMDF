@@ -1,9 +1,8 @@
 package mf4
 
 import (
-	"os"
-
 	"github.com/LincolnG4/GoMDF/blocks/DG"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type DataGroup struct {
@@ -12,8 +11,8 @@ type DataGroup struct {
 	CachedDataGroup []byte
 }
 
-func NewDataGroup(f *os.File, address int64) DataGroup {
-	dataGroupBlock := DG.New(f, address)
+func NewDataGroup(file *readeratwrapper.ReaderAtWrapper, address int64) DataGroup {
+	dataGroupBlock := DG.New(file, address)
 	return DataGroup{
 		block:        dataGroupBlock,
 		ChannelGroup: []*ChannelGroup{},

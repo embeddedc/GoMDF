@@ -3,9 +3,9 @@ package HL
 import (
 	"encoding/binary"
 	"fmt"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -35,7 +35,7 @@ type Data struct {
 	Reserved [5]byte
 }
 
-func New(file *os.File, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (*Block, error) {
 	var b Block
 	var err error
 

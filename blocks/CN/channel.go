@@ -5,12 +5,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/CC"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -91,7 +91,7 @@ const (
 	VirtualData
 )
 
-func New(file *os.File, version uint16, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, version uint16, startAddress int64) (*Block, error) {
 	var b Block
 	var err error
 
@@ -162,7 +162,7 @@ func New(file *os.File, version uint16, startAddress int64) (*Block, error) {
 
 // Conversion return Conversion structs that hold the formula to convert
 // raw sample to desired value.
-func (b *Block) Conversion(file *os.File, channelDataType uint8) (CC.Conversion, error) {
+func (b *Block) Conversion(file *readeratwrapper.ReaderAtWrapper, channelDataType uint8) (CC.Conversion, error) {
 	cc, err := b.NewConversion(file)
 	if err != nil {
 		return nil, err
@@ -174,7 +174,7 @@ func (b *Block) Conversion(file *os.File, channelDataType uint8) (CC.Conversion,
 }
 
 // NewConversion create a new CCBlock according to the Link.CcConvertion field.
-func (b *Block) NewConversion(file *os.File) (*CC.Block, error) {
+func (b *Block) NewConversion(file *readeratwrapper.ReaderAtWrapper) (*CC.Block, error) {
 	if b.Link.CcConvertion == 0 {
 		return nil, nil
 	}
@@ -307,8 +307,8 @@ func (b *Block) Type() string {
 	}
 }
 
-func (b *Block) ChannelName(f *os.File) string {
-	t, err := TX.GetText(f, b.TxName())
+func (b *Block) ChannelName(file *readeratwrapper.ReaderAtWrapper) string {
+	t, err := TX.GetText(file, b.TxName())
 	if err != nil {
 		return ""
 	}

@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Data struct {
@@ -19,7 +19,7 @@ type Block struct {
 	Data   Data
 }
 
-func GetText(file *os.File, startAdress int64) (string, error) {
+func GetText(file *readeratwrapper.ReaderAtWrapper, startAdress int64) (string, error) {
 	var blockSize uint64 = blocks.HeaderSize
 	var b Block
 

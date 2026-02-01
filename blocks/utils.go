@@ -5,7 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
+
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Header struct {
@@ -17,12 +18,12 @@ type Header struct {
 
 type LinkType map[string]int64
 
-func NewBuffer(file *os.File, startAdress int64, BLOCK_SIZE int) *bytes.Buffer {
+func NewBuffer(file *readeratwrapper.ReaderAtWrapper, startAdress int64, BLOCK_SIZE int) *bytes.Buffer {
 	bytesValue := seekBinaryByAddress(file, startAdress, BLOCK_SIZE)
 	return bytes.NewBuffer(bytesValue)
 }
 
-func seekBinaryByAddress(file *os.File, address int64, block_size int) []byte {
+func seekBinaryByAddress(file *readeratwrapper.ReaderAtWrapper, address int64, block_size int) []byte {
 	buf := make([]byte, block_size)
 	_, errs := file.Seek(int64(address), 0)
 	if errs != nil {
@@ -41,7 +42,7 @@ func seekBinaryByAddress(file *os.File, address int64, block_size int) []byte {
 	return buf
 }
 
-func GetText(file *os.File, startAdress int64, bufSize []byte, decode bool) []byte {
+func GetText(file *readeratwrapper.ReaderAtWrapper, startAdress int64, bufSize []byte, decode bool) []byte {
 	if startAdress == 0 {
 		return []byte{}
 	}
@@ -73,7 +74,7 @@ func SplitIdToArray(inputString string) [4]byte {
 	return byteArray
 }
 
-func GetHeader(file *os.File, startAddress int64, blockID string) (Header, error) {
+func GetHeader(file *readeratwrapper.ReaderAtWrapper, startAddress int64, blockID string) (Header, error) {
 	head := Header{}
 
 	// Seek to the start address
@@ -96,7 +97,7 @@ func GetHeader(file *os.File, startAddress int64, blockID string) (Header, error
 	return head, nil
 }
 
-func GetLength(file *os.File, startAddress int64) (uint64, error) {
+func GetLength(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (uint64, error) {
 	head := Header{}
 
 	// Seek to the start address
@@ -115,7 +116,7 @@ func GetLength(file *os.File, startAddress int64) (uint64, error) {
 	return head.Length - HeaderSize, nil
 }
 
-func GetHeaderID(file *os.File, startAddress int64) (string, error) {
+func GetHeaderID(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (string, error) {
 	head := Header{}
 
 	// Seek to the start address
@@ -134,7 +135,7 @@ func GetHeaderID(file *os.File, startAddress int64) (string, error) {
 	return string(head.ID[:]), nil
 }
 
-func GetBlockType(file *os.File, startAddress int64) (Header, error) {
+func GetBlockType(file *readeratwrapper.ReaderAtWrapper, startAddress int64) (Header, error) {
 	head := Header{}
 
 	// Seek to the start address
@@ -161,7 +162,7 @@ func CalculateDataSize(length uint64, linkCount uint64) uint64 {
 }
 
 // Create a buffer based on blocksize
-func LoadBuffer(file *os.File, blockSize uint64) *bytes.Buffer {
+func LoadBuffer(file *readeratwrapper.ReaderAtWrapper, blockSize uint64) *bytes.Buffer {
 	buf := make([]byte, blockSize)
 
 	_, err := file.Read(buf)
@@ -174,7 +175,7 @@ func LoadBuffer(file *os.File, blockSize uint64) *bytes.Buffer {
 	return bytes.NewBuffer(buf)
 }
 
-func ReadInt64FromBinary(file *os.File) int64 {
+func ReadInt64FromBinary(file *readeratwrapper.ReaderAtWrapper) int64 {
 	var value int64
 	if err := binary.Read(file, binary.LittleEndian, &value); err != nil {
 		fmt.Println("error reading binary data:", err)
@@ -182,7 +183,7 @@ func ReadInt64FromBinary(file *os.File) int64 {
 	return value
 }
 
-func ReadAllFromBinary(file *os.File) int64 {
+func ReadAllFromBinary(file *readeratwrapper.ReaderAtWrapper) int64 {
 	var value int64
 	if err := binary.Read(file, binary.LittleEndian, &value); err != nil {
 		fmt.Println("error reading binary data:", err)

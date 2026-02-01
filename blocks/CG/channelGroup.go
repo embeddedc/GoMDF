@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -52,7 +52,7 @@ type Data struct {
 
 const blockID string = blocks.CgID
 
-func New(file *os.File, version uint16, startAddress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, version uint16, startAddress int64) (*Block, error) {
 	var b Block
 
 	// Initialize the header

@@ -3,10 +3,10 @@ package DL
 import (
 	"encoding/binary"
 	"fmt"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/DT"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -39,7 +39,7 @@ const (
 	Distance
 )
 
-func New(file *os.File, version uint16, startAdress int64) (*Block, error) {
+func New(file *readeratwrapper.ReaderAtWrapper, version uint16, startAdress int64) (*Block, error) {
 	var b Block
 	var err error
 
@@ -122,7 +122,7 @@ func New(file *os.File, version uint16, startAdress int64) (*Block, error) {
 	return &b, nil
 }
 
-func (b *Block) Concatenate(file *os.File) (*DT.Block, error) {
+func (b *Block) Concatenate(file *readeratwrapper.ReaderAtWrapper) (*DT.Block, error) {
 	samples := make([]byte, 0)
 	for i := 0; i < int(b.Data.Count)-1; i++ {
 		dt, err := DT.New(file, b.Link.Data[i])

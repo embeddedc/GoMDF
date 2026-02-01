@@ -4,10 +4,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/LincolnG4/GoMDF/blocks"
 	"github.com/LincolnG4/GoMDF/blocks/TX"
+	"github.com/LincolnG4/GoMDF/readeratwrapper"
 )
 
 type Block struct {
@@ -15,7 +15,7 @@ type Block struct {
 	Data   []byte
 }
 
-func New(file *os.File, startAdress int64) string {
+func New(file *readeratwrapper.ReaderAtWrapper, startAdress int64) string {
 	if startAdress == 0 {
 		return ""
 	}
